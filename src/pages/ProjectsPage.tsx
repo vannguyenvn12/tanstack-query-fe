@@ -11,7 +11,7 @@ import axios from 'axios';
 export default function ProjectsPage() {
   const [showCreateForm, setShowCreateForm] = useState(false);
 
-  const { data, isPending, isError, error } = useQuery({
+  const { data, isPending, isFetching, isError, error, refetch } = useQuery({
     queryKey: ['projects'],
     queryFn: projectsApi.getAll,
   });
@@ -61,6 +61,12 @@ export default function ProjectsPage() {
     <div className='p-6 space-y-4 max-w-4xl mx-auto'>
       <div className='flex items-center justify-between'>
         <h1 className='text-2xl font-semibold text-gray-100'>Projects</h1>
+
+        <p>Is Fetching: {String(isFetching)}</p>
+        <p>Is Pending: {String(isPending)}</p>
+
+        <button onClick={() => refetch()}> ReFetch</button>
+
         {!showCreateForm && (
           <button
             onClick={() => setShowCreateForm(true)}
@@ -76,6 +82,7 @@ export default function ProjectsPage() {
           <h2 className='text-xl font-semibold text-gray-100 mb-4'>
             Create New Project
           </h2>
+
           <ProjectForm
             onSubmit={handleCreate}
             onCancel={() => {
