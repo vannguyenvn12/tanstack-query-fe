@@ -12,8 +12,6 @@ export default function AppRouter() {
         element={
           <>
             <ProjectsPage />
-            <ProjectsPage />
-            <ProjectsPage />
           </>
         }
       />

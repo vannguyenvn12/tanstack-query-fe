@@ -1,24 +1,22 @@
+import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { projectsApi } from '../api/projectsApi';
-// import Loader from '../components/Loader';
 import ErrorMessage from '../components/ErrorMessage';
+import Loader from '../components/Loader';
 import ProjectForm from '../components/ProjectForm';
 import type { Project } from '../types';
-import { useQuery } from '@tanstack/react-query';
+import axios from 'axios';
 
 export default function ProjectsPage() {
-  const [error, setError] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
 
-  const { data } = useQuery({
+  const { data, isPending, isError, error } = useQuery({
     queryKey: ['projects'],
     queryFn: projectsApi.getAll,
   });
 
-  if (!data) return <></>;
-
-  const projects = data.data;
+  const projects = data?.data || [];
 
   // const fetchProjects = async () => {
   //   try {
@@ -51,9 +49,13 @@ export default function ProjectsPage() {
   //   fetchProjects();
   // }, []);
 
-  // if (loading) return <Loader />;
-  if (error && !showCreateForm)
-    return <ErrorMessage message={error} onRetry={() => {}} />;
+  console.log('error', error);
+
+  if (isPending) return <Loader />;
+  if (isError && axios.isAxiosError(error))
+    return (
+      <ErrorMessage message={error.response?.data.error} onRetry={() => {}} />
+    );
 
   return (
     <div className='p-6 space-y-4 max-w-4xl mx-auto'>
@@ -78,7 +80,6 @@ export default function ProjectsPage() {
             onSubmit={handleCreate}
             onCancel={() => {
               setShowCreateForm(false);
-              setError(null);
             }}
             isLoading={true}
           />
