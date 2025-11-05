@@ -11,7 +11,6 @@ export default function ProjectsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [isCreating, setIsCreating] = useState(false);
 
   const fetchProjects = async () => {
     try {
@@ -35,37 +34,9 @@ export default function ProjectsPage() {
   };
 
   const handleCreate = async (
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     data: Omit<Project, 'id'> | Partial<Omit<Project, 'id'>>
-  ) => {
-    try {
-      setIsCreating(true);
-      // Ensure required fields are present
-      if (!('name' in data) || !data.name) {
-        setError('Project name is required');
-        return;
-      }
-      const createData = {
-        name: data.name,
-        description: data.description || '',
-        ownerId: data.ownerId || null,
-      };
-      const res = await projectsApi.create(createData);
-      setProjects([...projects, res.data]);
-      setShowCreateForm(false);
-    } catch (err: unknown) {
-      const error = err as {
-        response?: { data?: { error?: string } };
-        message?: string;
-      };
-      setError(
-        error.response?.data?.error ||
-          error.message ||
-          'Failed to create project'
-      );
-    } finally {
-      setIsCreating(false);
-    }
-  };
+  ) => {};
 
   useEffect(() => {
     fetchProjects();
@@ -100,7 +71,7 @@ export default function ProjectsPage() {
               setShowCreateForm(false);
               setError(null);
             }}
-            isLoading={isCreating}
+            isLoading={true}
           />
         </div>
       )}
