@@ -1,50 +1,59 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { projectsApi } from '../api/projectsApi';
-import Loader from '../components/Loader';
+// import Loader from '../components/Loader';
 import ErrorMessage from '../components/ErrorMessage';
 import ProjectForm from '../components/ProjectForm';
 import type { Project } from '../types';
+import { useQuery } from '@tanstack/react-query';
 
 export default function ProjectsPage() {
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
 
-  const fetchProjects = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const res = await projectsApi.getAll();
-      setProjects(res.data);
-    } catch (err: unknown) {
-      const error = err as {
-        response?: { data?: { error?: string } };
-        message?: string;
-      };
-      setError(
-        error.response?.data?.error ||
-          error.message ||
-          'Failed to fetch projects'
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data } = useQuery({
+    queryKey: ['projects'],
+    queryFn: projectsApi.getAll,
+  });
+
+  if (!data) return <></>;
+
+  const projects = data.data;
+
+  // const fetchProjects = async () => {
+  //   try {
+  //     setLoading(true);
+  //     setError(null);
+  //     const res = await projectsApi.getAll();
+
+  //     setProjects(res.data);
+  //   } catch (err: unknown) {
+  //     const error = err as {
+  //       response?: { data?: { error?: string } };
+  //       message?: string;
+  //     };
+  //     setError(
+  //       error.response?.data?.error ||
+  //         error.message ||
+  //         'Failed to fetch projects'
+  //     );
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   const handleCreate = async (
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     data: Omit<Project, 'id'> | Partial<Omit<Project, 'id'>>
   ) => {};
 
-  useEffect(() => {
-    fetchProjects();
-  }, []);
+  // useEffect(() => {
+  //   fetchProjects();
+  // }, []);
 
-  if (loading) return <Loader />;
+  // if (loading) return <Loader />;
   if (error && !showCreateForm)
-    return <ErrorMessage message={error} onRetry={fetchProjects} />;
+    return <ErrorMessage message={error} onRetry={() => {}} />;
 
   return (
     <div className='p-6 space-y-4 max-w-4xl mx-auto'>
