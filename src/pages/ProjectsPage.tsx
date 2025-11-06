@@ -14,8 +14,6 @@ export default function ProjectsPage() {
   const { data, isPending, isFetching, isError, error, refetch } = useQuery({
     queryKey: ['projects'],
     queryFn: projectsApi.getAll,
-    staleTime: 5000,
-    gcTime: 5 * 60 * 1000,
   });
 
   const projects = data?.data || [];

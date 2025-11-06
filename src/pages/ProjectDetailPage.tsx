@@ -1,12 +1,13 @@
-import { useEffect, useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { projectsApi } from '../api/projectsApi';
 import { tasksApi } from '../api/tasksApi';
-import Loader from '../components/Loader';
+import ConfirmDialog from '../components/ConfirmDialog';
 import ErrorMessage from '../components/ErrorMessage';
+import Loader from '../components/Loader';
 import ProjectForm from '../components/ProjectForm';
 import TaskForm from '../components/TaskForm';
-import ConfirmDialog from '../components/ConfirmDialog';
 import type { Project, Task } from '../types';
 
 export default function ProjectDetailPage() {
@@ -14,9 +15,8 @@ export default function ProjectDetailPage() {
   const projectId = id ? parseInt(id) : null;
   const navigate = useNavigate();
 
-  const [project, setProject] = useState<Project | null>(null);
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [loading, setLoading] = useState(true);
+  // const [project, setProject] = useState<Project | null>(null);
+  // const [tasks, setTasks] = useState<Task[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isEditingProject, setIsEditingProject] = useState(false);
   const [isUpdatingProject, setIsUpdatingProject] = useState(false);
@@ -28,45 +28,57 @@ export default function ProjectDetailPage() {
   const [isUpdatingTask, setIsUpdatingTask] = useState(false);
   const [deletingTaskId, setDeletingTaskId] = useState<number | null>(null);
 
-  const fetchProjectData = async () => {
-    if (!projectId) {
-      setError('Invalid project ID');
-      setLoading(false);
-      return;
-    }
+  const { data, isPending } = useQuery({
+    queryKey: ['projects', projectId],
+    queryFn: () => projectsApi.getById(projectId || 1),
+  });
+  const project = data?.data || null;
 
-    try {
-      setLoading(true);
-      setError(null);
+  const { data: data2 } = useQuery({
+    queryKey: ['tasks', projectId],
+    queryFn: () => tasksApi.getByProjectId(projectId || 1),
+  });
+  const tasks = data2?.data || [];
 
-      const [projectRes, tasksRes] = await Promise.all([
-        projectsApi.getById(projectId),
-        tasksApi.getByProjectId(projectId),
-      ]);
+  // const fetchProjectData = async () => {
+  //   if (!projectId) {
+  //     setError('Invalid project ID');
+  //     setLoading(false);
+  //     return;
+  //   }
 
-      setProject(projectRes.data);
-      setTasks(tasksRes.data);
-    } catch (err: unknown) {
-      const error = err as {
-        response?: { data?: { error?: string } };
-        message?: string;
-      };
-      setError(
-        error.response?.data?.error ||
-          error.message ||
-          'Failed to fetch project data'
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+  //   try {
+  //     setLoading(true);
+  //     setError(null);
+
+  //     const [projectRes, tasksRes] = await Promise.all([
+  //       projectsApi.getById(projectId),
+  //       tasksApi.getByProjectId(projectId),
+  //     ]);
+
+  //     setProject(projectRes.data);
+  //     setTasks(tasksRes.data);
+  //   } catch (err: unknown) {
+  //     const error = err as {
+  //       response?: { data?: { error?: string } };
+  //       message?: string;
+  //     };
+  //     setError(
+  //       error.response?.data?.error ||
+  //         error.message ||
+  //         'Failed to fetch project data'
+  //     );
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   const handleUpdateProject = async (data: Partial<Omit<Project, 'id'>>) => {
     if (!projectId) return;
     try {
       setIsUpdatingProject(true);
       const res = await projectsApi.update(projectId, data);
-      setProject(res.data);
+      // setProject(res.data);
       setIsEditingProject(false);
     } catch (err: unknown) {
       const error = err as {
@@ -175,14 +187,14 @@ export default function ProjectDetailPage() {
     }
   };
 
-  useEffect(() => {
-    fetchProjectData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [projectId]);
+  // useEffect(() => {
+  //   fetchProjectData();
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [projectId]);
 
-  if (loading) return <Loader />;
+  if (isPending) return <Loader />;
   if (error && !isEditingProject && !showCreateTask && !editingTask)
-    return <ErrorMessage message={error} onRetry={fetchProjectData} />;
+    return <ErrorMessage message={error} onRetry={() => {}} />;
   if (!project) return <ErrorMessage message='Project not found' />;
 
   return (
