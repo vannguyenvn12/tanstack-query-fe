@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQueries, useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { projectsApi } from '../api/projectsApi';
@@ -30,14 +30,14 @@ export default function ProjectDetailPage() {
 
   const { data, isPending } = useQuery({
     queryKey: ['projects', projectId],
-    queryFn: () => projectsApi.getById(projectId || 1),
+    queryFn: () => projectsApi.getById(projectId!),
     enabled: !!projectId,
   });
   const project = data?.data || null;
 
   const { data: data2 } = useQuery({
     queryKey: ['tasks', projectId],
-    queryFn: () => tasksApi.getByProjectId(projectId || 1),
+    queryFn: () => tasksApi.getByProjectId(projectId!),
     enabled: !!projectId,
   });
   const tasks = data2?.data || [];
