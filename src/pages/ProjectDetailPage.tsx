@@ -31,12 +31,14 @@ export default function ProjectDetailPage() {
   const { data, isPending } = useQuery({
     queryKey: ['projects', projectId],
     queryFn: () => projectsApi.getById(projectId || 1),
+    enabled: !!projectId,
   });
   const project = data?.data || null;
 
   const { data: data2 } = useQuery({
     queryKey: ['tasks', projectId],
     queryFn: () => tasksApi.getByProjectId(projectId || 1),
+    enabled: !!projectId,
   });
   const tasks = data2?.data || [];
 

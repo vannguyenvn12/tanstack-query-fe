@@ -7,13 +7,21 @@ import Loader from '../components/Loader';
 import ProjectForm from '../components/ProjectForm';
 import type { Project } from '../types';
 import axios from 'axios';
+import { usersApi } from '../api/usersApi';
 
 export default function ProjectsPage() {
   const [showCreateForm, setShowCreateForm] = useState(false);
 
+  const { data: userQuery } = useQuery({
+    queryKey: ['user'],
+    queryFn: usersApi.getCurrentUser,
+  });
+  const user = userQuery?.data;
+
   const { data, isPending, isFetching, isError, error, refetch } = useQuery({
     queryKey: ['projects'],
-    queryFn: projectsApi.getAll,
+    queryFn: () => projectsApi.getByUserId(user!.id),
+    enabled: !!user?.id,
   });
 
   const projects = data?.data || [];
