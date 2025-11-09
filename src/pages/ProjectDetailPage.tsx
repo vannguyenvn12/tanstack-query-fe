@@ -1,4 +1,4 @@
-import { useQueries, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { projectsApi } from '../api/projectsApi';
@@ -27,6 +27,7 @@ export default function ProjectDetailPage() {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [isUpdatingTask, setIsUpdatingTask] = useState(false);
   const [deletingTaskId, setDeletingTaskId] = useState<number | null>(null);
+  const [page, setPage] = useState(1);
 
   const { data, isPending } = useQuery({
     queryKey: ['projects', projectId],
@@ -35,12 +36,17 @@ export default function ProjectDetailPage() {
   });
   const project = data?.data || null;
 
-  const { data: data2 } = useQuery({
-    queryKey: ['tasks', projectId],
-    queryFn: () => tasksApi.getByProjectId(projectId!),
+  const { data: taskQuery, isPending: isTaskPending } = useQuery({
+    queryKey: ['tasks', projectId, page],
+    queryFn: () => tasksApi.getByProjectIdWithPaginate(projectId!, page),
     enabled: !!projectId,
   });
-  const tasks = data2?.data || [];
+  const tasks = taskQuery?.data.items || [];
+  const totalPages = taskQuery?.data.totalPages || 1;
+
+  const handlePage = (page: number) => {
+    setPage(page);
+  };
 
   // const fetchProjectData = async () => {
   //   if (!projectId) {
@@ -299,7 +305,9 @@ export default function ProjectDetailPage() {
           </div>
         )}
 
-        {tasks.length === 0 ? (
+        {isTaskPending ? (
+          <Loader />
+        ) : tasks.length === 0 ? (
           <p className='text-gray-400'>No tasks for this project.</p>
         ) : (
           <ul className='space-y-2'>
@@ -359,6 +367,20 @@ export default function ProjectDetailPage() {
           </ul>
         )}
       </div>
+      {/* Pagination */}
+
+      {!isTaskPending &&
+        Array.from(Array(totalPages)).map((item, index) => (
+          <button
+            onClick={() => handlePage(index + 1)}
+            key={index}
+            className='bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded ml-1'
+          >
+            {index + 1}
+          </button>
+        ))}
+
+      <div className='h-[500px]'></div>
 
       {showDeleteConfirm && (
         <ConfirmDialog
