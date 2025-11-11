@@ -1,4 +1,4 @@
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { projectsApi } from '../api/projectsApi';
@@ -9,9 +9,25 @@ import type { Project } from '../types';
 
 import axios from 'axios';
 import useInfiniteScroll from 'react-infinite-scroll-hook';
+import { usersApi } from '../api/usersApi';
 
 export default function ProjectsPage() {
   const [showCreateForm, setShowCreateForm] = useState(false);
+
+  const { data: userQuery } = useQuery({
+    queryKey: ['users'],
+    queryFn: usersApi.getAll,
+    select: (data) => {
+      return {
+        total: data.data.length,
+        totalAdmins: data.data.filter((user) => user.role === 'admin').length,
+        totalUsers: data.data.filter((user) => user.role === 'user').length,
+        admins: data.data.filter((user) => user.role === 'admin'),
+      };
+    },
+  });
+
+  console.log('adminUsers', userQuery);
 
   const {
     data,

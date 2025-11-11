@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { projectsApi } from '../api/projectsApi';
 import { tasksApi } from '../api/tasksApi';
@@ -28,6 +28,7 @@ export default function ProjectDetailPage() {
   const [isUpdatingTask, setIsUpdatingTask] = useState(false);
   const [deletingTaskId, setDeletingTaskId] = useState<number | null>(null);
   const [page, setPage] = useState(1);
+  const queryClient = useQueryClient();
 
   const { data, isPending } = useQuery({
     queryKey: ['projects', projectId],
@@ -43,6 +44,16 @@ export default function ProjectDetailPage() {
   });
   const tasks = taskQuery?.data.items || [];
   const totalPages = taskQuery?.data.totalPages || 1;
+
+  useEffect(() => {
+    const nextPage = page + 1;
+    if (nextPage >= totalPages) return;
+
+    queryClient.prefetchQuery({
+      queryKey: ['tasks', projectId, nextPage],
+      queryFn: () => tasksApi.getByProjectIdWithPaginate(projectId!, nextPage),
+    });
+  }, [queryClient, page, projectId, totalPages]);
 
   const handlePage = (page: number) => {
     setPage(page);
