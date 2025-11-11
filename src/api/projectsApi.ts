@@ -1,8 +1,12 @@
 import axiosClient from './axiosClient';
-import type { Project } from '../types';
+import type { IPaginateCursor, Project } from '../types';
 
 export const projectsApi = {
   getAll: () => axiosClient.get<Project[]>('/api/projects'),
+  getAllCursor: (cursor: string | null, limit = 15) =>
+    axiosClient.get<IPaginateCursor<Project>>('/api/projects/pagination', {
+      params: { cursor, limit },
+    }),
   getById: (id: number) => axiosClient.get<Project>(`/api/projects/${id}`),
   getByUserId: (userId: number) =>
     axiosClient.get<Project[]>(`/api/projects/users/${userId}`),

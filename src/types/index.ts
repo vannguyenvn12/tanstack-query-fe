@@ -25,3 +25,9 @@ export interface IPaginate<T> {
   currentPage: number;
   items: T;
 }
+
+export interface IPaginateCursor<T> {
+  items: T;
+  nextCursor: string;
+  hasNextPage: boolean;
+}

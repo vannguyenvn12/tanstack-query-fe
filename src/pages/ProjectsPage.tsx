@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { projectsApi } from '../api/projectsApi';
@@ -6,60 +6,42 @@ import ErrorMessage from '../components/ErrorMessage';
 import Loader from '../components/Loader';
 import ProjectForm from '../components/ProjectForm';
 import type { Project } from '../types';
+
 import axios from 'axios';
-import { usersApi } from '../api/usersApi';
+import useInfiniteScroll from 'react-infinite-scroll-hook';
 
 export default function ProjectsPage() {
   const [showCreateForm, setShowCreateForm] = useState(false);
 
-  const { data: userQuery } = useQuery({
-    queryKey: ['user'],
-    queryFn: usersApi.getCurrentUser,
-  });
-  const user = userQuery?.data;
-
-  const { data, isPending, isFetching, isError, error, refetch } = useQuery({
+  const {
+    data,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+    isError,
+    error,
+  } = useInfiniteQuery({
     queryKey: ['projects'],
-    queryFn: () => projectsApi.getByUserId(user!.id),
-    enabled: !!user?.id,
+    queryFn: ({ pageParam }: { pageParam: null | string }) =>
+      projectsApi.getAllCursor(pageParam),
+    initialPageParam: null,
+    getNextPageParam: (lastPage) => lastPage.data.nextCursor ?? undefined,
   });
 
-  const projects = data?.data || [];
+  const projects = data?.pages?.flatMap((item) => item.data.items) || [];
 
-  // const fetchProjects = async () => {
-  //   try {
-  //     setLoading(true);
-  //     setError(null);
-  //     const res = await projectsApi.getAll();
-
-  //     setProjects(res.data);
-  //   } catch (err: unknown) {
-  //     const error = err as {
-  //       response?: { data?: { error?: string } };
-  //       message?: string;
-  //     };
-  //     setError(
-  //       error.response?.data?.error ||
-  //         error.message ||
-  //         'Failed to fetch projects'
-  //     );
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
+  const [infiniteRef] = useInfiniteScroll({
+    loading: isFetchingNextPage,
+    hasNextPage,
+    onLoadMore: fetchNextPage,
+    disabled: Boolean(error),
+  });
 
   const handleCreate = async (
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     data: Omit<Project, 'id'> | Partial<Omit<Project, 'id'>>
   ) => {};
 
-  // useEffect(() => {
-  //   fetchProjects();
-  // }, []);
-
-  console.log('error', error);
-
-  if (isPending) return <Loader />;
   if (isError && axios.isAxiosError(error))
     return (
       <ErrorMessage message={error.response?.data.error} onRetry={() => {}} />
@@ -69,12 +51,6 @@ export default function ProjectsPage() {
     <div className='p-6 space-y-4 max-w-4xl mx-auto'>
       <div className='flex items-center justify-between'>
         <h1 className='text-2xl font-semibold text-gray-100'>Projects</h1>
-
-        <p>Is Fetching: {String(isFetching)}</p>
-        <p>Is Pending: {String(isPending)}</p>
-
-        <button onClick={() => refetch()}> ReFetch</button>
-
         {!showCreateForm && (
           <button
             onClick={() => setShowCreateForm(true)}
@@ -120,6 +96,7 @@ export default function ProjectsPage() {
           ))}
         </ul>
       )}
+      {hasNextPage && <Loader ref={infiniteRef}></Loader>}
     </div>
   );
 }
