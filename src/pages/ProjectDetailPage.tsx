@@ -10,6 +10,7 @@ import ProjectForm from '../components/ProjectForm';
 import TaskForm from '../components/TaskForm';
 import type { Project, Task } from '../types';
 import axios from 'axios';
+import { toast } from 'react-toastify';
 
 export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -50,6 +51,17 @@ export default function ProjectDetailPage() {
   // Mutation
   const createTaskMutation = useMutation({
     mutationFn: (data: Omit<Task, 'id'>) => tasksApi.create(data),
+    onSuccess: () => {
+      toast.success('Create task successfully!');
+    },
+    onError: (error) => {
+      if (axios.isAxiosError(error)) {
+        toast.error(error.response?.data.message);
+      }
+    },
+    onSettled: () => {
+      console.log('error or success');
+    },
   });
 
   // Side Effect
@@ -267,16 +279,6 @@ export default function ProjectDetailPage() {
             <h3 className='text-lg font-semibold text-gray-100 mb-4'>
               Create New Task
             </h3>
-            {createTaskMutation.isError &&
-              axios.isAxiosError(createTaskMutation.error) && (
-                <h3 className='text-red-500'>
-                  {createTaskMutation.error.response?.data.message}
-                </h3>
-              )}
-
-            {createTaskMutation.isSuccess && (
-              <h3 className='text-green-500'>Task added</h3>
-            )}
             <TaskForm
               projectId={projectId}
               onSubmit={handleCreateTask}

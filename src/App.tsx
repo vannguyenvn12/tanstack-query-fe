@@ -1,5 +1,6 @@
 import { BrowserRouter, Link } from 'react-router-dom';
 import AppRouter from './router';
+import { ToastContainer } from 'react-toastify';
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
           <AppRouter />
         </main>
       </div>
+      <ToastContainer />
     </BrowserRouter>
   );
 }
