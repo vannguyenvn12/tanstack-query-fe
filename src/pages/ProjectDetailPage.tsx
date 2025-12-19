@@ -51,8 +51,13 @@ export default function ProjectDetailPage() {
   // Mutation
   const createTaskMutation = useMutation({
     mutationFn: (data: Omit<Task, 'id'>) => tasksApi.create(data),
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success('Create task successfully!');
+      await queryClient.invalidateQueries({
+        queryKey: ['tasks'], // ['tasks', 1] ['tasks' 1, 11]
+      });
+
+      console.log('log after cache invalidation');
     },
     onError: (error) => {
       if (axios.isAxiosError(error)) {
