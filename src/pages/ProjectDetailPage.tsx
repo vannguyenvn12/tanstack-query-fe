@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { projectsApi } from '../api/projectsApi';
@@ -30,6 +30,7 @@ export default function ProjectDetailPage() {
   const [page, setPage] = useState(1);
   const queryClient = useQueryClient();
 
+  // Query
   const { data, isPending } = useQuery({
     queryKey: ['projects', projectId],
     queryFn: () => projectsApi.getById(projectId!),
@@ -45,6 +46,12 @@ export default function ProjectDetailPage() {
   const tasks = taskQuery?.data.items || [];
   const totalPages = taskQuery?.data.totalPages || 1;
 
+  // Mutation
+  const createTaskMutation = useMutation({
+    mutationFn: (data: Omit<Task, 'id'>) => tasksApi.create(data),
+  });
+
+  // Side Effect
   useEffect(() => {
     const nextPage = page + 1;
     if (nextPage >= totalPages) return;
@@ -135,37 +142,10 @@ export default function ProjectDetailPage() {
     }
   };
 
-  const handleCreateTask = async (
-    data: Omit<Task, 'id'> | Partial<Omit<Task, 'id'>>
-  ) => {
+  const handleCreateTask = async (data: Omit<Task, 'id'>) => {
     if (!projectId) return;
-    try {
-      setIsCreatingTask(true);
-      // Ensure required fields are present
-      if (!('title' in data) || !data.title) {
-        setError('Task title is required');
-        return;
-      }
-      const createData = {
-        projectId,
-        title: data.title,
-        status: data.status || 'todo',
-        assigneeId: data.assigneeId || null,
-      };
-      const res = await tasksApi.create(createData);
-      setTasks([...tasks, res.data]);
-      setShowCreateTask(false);
-    } catch (err: unknown) {
-      const error = err as {
-        response?: { data?: { error?: string } };
-        message?: string;
-      };
-      setError(
-        error.response?.data?.error || error.message || 'Failed to create task'
-      );
-    } finally {
-      setIsCreatingTask(false);
-    }
+
+    createTaskMutation.mutate(data);
   };
 
   const handleUpdateTask = async (data: Partial<Omit<Task, 'id'>>) => {
@@ -293,7 +273,7 @@ export default function ProjectDetailPage() {
                 setShowCreateTask(false);
                 setError(null);
               }}
-              isLoading={isCreatingTask}
+              isLoading={createTaskMutation.isPending}
             />
           </div>
         )}
